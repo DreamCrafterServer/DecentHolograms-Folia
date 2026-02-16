@@ -1,3 +1,9 @@
+This fork merges [PR #188](https://github.com/DecentSoftware-eu/DecentHolograms/pull/188) from the upstream repository into the latest version of DecentHolograms to provide Folia support.
+
+Upstream repository:
+https://github.com/DecentSoftware-eu/DecentHolograms
+
+
 # Decent Holograms
 [![SpigotMC Downloads](https://img.shields.io/spiget/downloads/96927?label=Downloads) 
 ![SpigotMC Version](https://img.shields.io/spiget/version/96927?label=Release) 

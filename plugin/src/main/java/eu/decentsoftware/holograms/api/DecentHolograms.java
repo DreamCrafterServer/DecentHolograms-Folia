@@ -13,6 +13,9 @@ import eu.decentsoftware.holograms.api.utils.Log;
 import eu.decentsoftware.holograms.api.utils.UpdateChecker;
 import eu.decentsoftware.holograms.api.utils.event.EventFactory;
 import eu.decentsoftware.holograms.api.utils.reflect.Version;
+import eu.decentsoftware.holograms.api.utils.scheduler.SchedulerAdapter;
+import eu.decentsoftware.holograms.api.utils.scheduler.adapters.BukkitSchedulerAdapter;
+import eu.decentsoftware.holograms.api.utils.scheduler.adapters.FoliaSchedulerAdapter;
 import eu.decentsoftware.holograms.api.utils.tick.Ticker;
 import eu.decentsoftware.holograms.event.DecentHologramsReloadEvent;
 import eu.decentsoftware.holograms.integration.IntegrationAvailabilityService;
@@ -45,6 +48,7 @@ import java.util.logging.Logger;
 public final class DecentHolograms {
 
     private final JavaPlugin plugin;
+    private final SchedulerAdapter schedulerAdapter;
     private NmsAdapter nmsAdapter;
     private IntegrationAvailabilityService integrationAvailabilityService;
     private NmsPacketListenerService nmsPacketListenerService;
@@ -57,6 +61,7 @@ public final class DecentHolograms {
 
     DecentHolograms(@NonNull JavaPlugin plugin) {
         this.plugin = plugin;
+        this.schedulerAdapter = FoliaSchedulerAdapter.isSupported() ? new FoliaSchedulerAdapter(plugin) : new BukkitSchedulerAdapter(plugin);
     }
 
     void enable() {
@@ -158,6 +163,11 @@ public final class DecentHolograms {
     @Contract(pure = true)
     public Logger getLogger() {
         return plugin.getLogger();
+    }
+
+    @Contract(pure = true)
+    public SchedulerAdapter getScheduler(){
+        return schedulerAdapter;
     }
 
 }
