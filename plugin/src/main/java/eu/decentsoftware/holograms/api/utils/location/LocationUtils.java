@@ -11,6 +11,7 @@ import org.bukkit.World;
 import org.bukkit.util.NumberConversions;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 @UtilityClass
@@ -44,24 +45,74 @@ public class LocationUtils {
     public static Location asLocationE(String string, String separator) throws LocationParseException {
         if (string == null || string.trim().isEmpty()) return null;
         String[] spl = string.replace(",", ".").split(separator);
-        Location location;
-        if (spl.length >= 4) {
-            World world = getWorld(spl[0]);
+        ParsedLocation parsedLocation = parseLocationParts(spl, separator);
+        if (parsedLocation != null) {
+            World world = getWorld(parsedLocation.worldName);
             if (world != null) {
                 try {
-                    location = new Location(world, Double.parseDouble(spl[1]), Double.parseDouble(spl[2]), Double.parseDouble(spl[3]));
-                    if (spl.length >= 6) {
-                        location.setYaw(Float.parseFloat(spl[4]));
-                        location.setPitch(Float.parseFloat(spl[5]));
+                    Location location = new Location(
+                            world,
+                            Double.parseDouble(parsedLocation.x),
+                            Double.parseDouble(parsedLocation.y),
+                            Double.parseDouble(parsedLocation.z)
+                    );
+                    if (parsedLocation.yaw != null && parsedLocation.pitch != null) {
+                        location.setYaw(Float.parseFloat(parsedLocation.yaw));
+                        location.setPitch(Float.parseFloat(parsedLocation.pitch));
                     }
                     return location;
                 } catch (NumberFormatException e) {
                     Log.warn("Error while parsing Location %s", e, string);
                 }
             }
-            throw new LocationParseException(String.format("World '%s' not found.", spl[0]), LocationParseException.Reason.WORLD, spl[0]);
+            throw new LocationParseException(String.format("World '%s' not found.", parsedLocation.worldName), LocationParseException.Reason.WORLD, parsedLocation.worldName);
         }
         throw new LocationParseException(String.format("Wrong location format: %s", string));
+    }
+
+    private static @Nullable ParsedLocation parseLocationParts(@NonNull String[] parts, @NonNull String separator) {
+        if (parts.length < 4) {
+            return null;
+        }
+
+        if (parts.length >= 6) {
+            ParsedLocation withYawPitch = parseLocationParts(parts, separator, 5);
+            if (withYawPitch != null) {
+                return withYawPitch;
+            }
+        }
+
+        return parseLocationParts(parts, separator, 3);
+    }
+
+    private static @Nullable ParsedLocation parseLocationParts(@NonNull String[] parts, @NonNull String separator, int numericParts) {
+        int worldParts = parts.length - numericParts;
+        if (worldParts < 1) {
+            return null;
+        }
+
+        for (int index = worldParts; index < parts.length; index++) {
+            if (!isNumber(parts[index])) {
+                return null;
+            }
+        }
+
+        String worldName = String.join(separator, Arrays.copyOfRange(parts, 0, worldParts));
+        String x = parts[worldParts];
+        String y = parts[worldParts + 1];
+        String z = parts[worldParts + 2];
+        String yaw = numericParts == 5 ? parts[worldParts + 3] : null;
+        String pitch = numericParts == 5 ? parts[worldParts + 4] : null;
+        return new ParsedLocation(worldName, x, y, z, yaw, pitch);
+    }
+
+    private static boolean isNumber(@NonNull String value) {
+        try {
+            Double.parseDouble(value);
+            return true;
+        } catch (NumberFormatException ignored) {
+            return false;
+        }
     }
 
     public static Location randomizeLocation(@NonNull Location location) {
@@ -94,6 +145,26 @@ public class LocationUtils {
         }
 
         return world;
+    }
+
+    private static class ParsedLocation {
+
+        private final String worldName;
+        private final String x;
+        private final String y;
+        private final String z;
+        private final String yaw;
+        private final String pitch;
+
+        private ParsedLocation(@NonNull String worldName, @NonNull String x, @NonNull String y, @NonNull String z, @Nullable String yaw, @Nullable String pitch) {
+            this.worldName = worldName;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.yaw = yaw;
+            this.pitch = pitch;
+        }
+
     }
 
 }
